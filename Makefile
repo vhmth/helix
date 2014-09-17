@@ -7,4 +7,4 @@ clean:
 .PHONY: dist
 dist: clean
 	@mkdir -p dist
-	@./node_modules/.bin/browserify -d src/index.js > dist/helix.js
+	@./node_modules/.bin/browserify src/index.js > dist/helix.js

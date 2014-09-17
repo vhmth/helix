@@ -1,16 +1,19 @@
 var Cache = require('./cache'),
   logger = require('./helpers/logger'),
-  objectHelpers = require('./helpers/object');
+  objectHelpers = require('./helpers/object'),
+  request = require('./request');
 
 var DEFAULT_INIT_OPTIONS = {
     cache: false,
+    prefetch: 10,
     resizeThrottle: 200,
     scrollThrottle: 200,
   },
   DEFAULT_INIT_CACHE_OPTIONS = {
     flushOnResize: false
   },
-  LIST_ITEM_CLASS = 'helix-item';
+  LIST_ITEM_CLASS = 'helix-item',
+  STUB_ITEM_CLASS = 'helix-stub';
 
 /*
   Return the value pointed to by options[key]. If options[key] does not exist,
@@ -61,6 +64,7 @@ exports.heightCache = function (instance) {
 */
 exports.listItems = function (instance) {
   var listItemString = '<li class="' + LIST_ITEM_CLASS + '"></li>',
+    stubItemString = '<li class="' + STUB_ITEM_CLASS + '"></li>',
     $scrollContainer = instance.$scrollContainer,
     viewportHeight = instance.scrollHeight,
     $listItem = $(listItemString),
@@ -69,6 +73,7 @@ exports.listItems = function (instance) {
     itemIndex;
 
   $scrollContainer.html('');
+  $scrollContainer.append(instance.topStub = $(stubItemString));
   $scrollContainer.append($listItem);
   listItemDefaultHeight = $listItem.height();
   numElements = Math.ceil(viewportHeight / listItemDefaultHeight);
@@ -76,15 +81,44 @@ exports.listItems = function (instance) {
   for (itemIndex = 0; itemIndex < numElements - 1; itemIndex++) {
     $scrollContainer.append(listItemString);
   }
+
+  $scrollContainer.append(instance.bottomStub = $(stubItemString));
 };
 
 //TODO
 exports.scrollEvent = function (instance) {
-  var $scrollContainer = instance.$scrollContainer;
+  var $scrollContainer = instance.$scrollContainer,
+    fetching = false;
+
+  instance.bottomModel = instance.topModel = 0;
+  instance.prefetchCaches = {
+    prev: [],
+    next: []
+  };
+  instance.scrollState = {
+    scrollTop: $scrollContainer.scrollTop()
+  };
 
   $scrollContainer.scroll(function () {
     var scrollTop = $scrollContainer.scrollTop();
+
+    if (fetching === false) {
+      fetching = true;
+      instance.scrollState.downScroll = scrollTop >= instance.scrollTop;
+
+      // TODO: insert loading view here
+
+      request.models(instance, function (models) {
+        request.elements(instance, models, function () {
+          fetching = false;
+          // TODO: remove loading view here
+        });
+      });
+    }
+
+    instance.scrollTop = scrollTop;
   });
+  $scrollContainer.trigger('scroll');
 };
 
 // Private Functions

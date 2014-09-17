@@ -75,6 +75,10 @@ These requirements must be met by the consumer of Helix:
     wasInsertedIntoDOM: FUNCTION,
     willBeRemovedFromDOM: FUNCTION,
 
+    // The number of items to prefetch below and above the current viewport.
+    // Defaults to 10.
+    prefetch: 10,
+
     // Throttle time intervals for requesting views on resize and scroll events.
     // Defaults to 200ms.
     resizeThrottle: 200,

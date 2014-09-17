@@ -24,3 +24,9 @@
 #my-scroll-container li:not(:first-child) {
   border-top: 1px solid black;
 }
+
+/* Helix core styles. */
+.helix-stub {
+  display: block;
+  height: 0px;
+}
